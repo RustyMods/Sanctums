@@ -1,0 +1,11 @@
+item: ''
+msg_wrongrune: 'Invalid rune, resetting'
+msg_alreadyhaveeffect: 'Already have sanctum power'
+
+hud_activatedrunes: 'activated runes'
+hud_sanctumprefix: 'Sanctum of'
+se_damageincrease: 'Damage'
+se_loot: 'Loot'
+se_damagereduction: 'Damage Reduction'
+se_skillraise: 'Skill Experience'
+skill_all: 'All Skills'
