@@ -10,6 +10,7 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using LocalizationManager;
 using PieceManager;
+using Sanctums.Behaviors;
 using Sanctums.Managers;
 using Sanctums.Sanctum;
 using ServerSync;
@@ -39,19 +40,26 @@ namespace Sanctums
 
         private static ConfigEntry<Toggle> _serverConfigLocked = null!;
         private static ConfigEntry<Toggle> c_completeChallenge = null!;
+        private static ConfigEntry<Toggle> c_preventDeath = null!;
+        private static ConfigEntry<Toggle> c_usePrayAnimation = null!;
         private static ConfigEntry<int> c_locationAmount = null!;
+        private static ConfigEntry<Heightmap.Biome> c_biomes = null!;
         private void LoadConfigs()
         {
             _serverConfigLocked = config("1 - General", "Lock Configuration", Toggle.On,
                 "If on, the configuration is locked and can be changed by server admins only.");
             _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
 
-            c_completeChallenge = config("2 - Settings", "Complete Challenge", Toggle.On,
-                "If on, requires to complete challenge before activating sanctum");
-            c_locationAmount = config("2 - Settings", "Amount", 100,
-                "Set amount of sanctums locations to attempt to generate");
+            c_completeChallenge = config("2 - Settings", "Complete Challenge", Toggle.On, "If on, requires to complete challenge before activating sanctum");
+            c_preventDeath = config("2 - Settings", "Prevent Death", Toggle.On, "If on, if user has sanctum effect, they will survive death and lose effect, else lose effect");
+            c_usePrayAnimation = config("2 - Settings", "Use Pray Animation", Toggle.On, "If on, when user interacts with sanctum, they start praying");
+            c_locationAmount = config("3 - Location", "Amount", 100, "Set amount of sanctums locations to attempt to generate");
+            c_biomes = config("3 - Location", "Biomes", Heightmap.Biome.All, "Set biomes sanctums can spawn in");
+            
         }
 
+        public static bool UsePrayAnimation() => c_usePrayAnimation.Value is Toggle.On;
+        public static bool PreventDeath() => c_preventDeath.Value is Toggle.On;
         public static bool CompleteChallenge() => c_completeChallenge.Value is Toggle.On;
         public void Awake()
         {
@@ -65,6 +73,7 @@ namespace Sanctums
             SanctumManager.LoadSanctumData();
             LoadAnimations();
             SanctumManager.LoadServerDataWatcher();
+            Commands.LoadServerLocationChange();
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();
@@ -82,7 +91,7 @@ namespace Sanctums
                 new LocationManager.LocationData("SanctumLocation", AssetBundle, "KingSanctum")                {
                     m_data =
                     {
-                        m_biome = Heightmap.Biome.All,
+                        m_biome = c_biomes.Value,
                         m_quantity = c_locationAmount.Value,
                         m_group = "Sanctums",
                         m_prefabName = "SanctumLocation",
@@ -92,20 +101,19 @@ namespace Sanctums
                         m_surroundCheckDistance = 10f,
                     }
                 };
-            
         }
 
         private void LoadPieces()
         {
             BuildPiece sanctum = new BuildPiece(AssetBundle, "KingSanctum");
-            sanctum.Name.English("King's Sanctum");
+            sanctum.Name.English("Kings Sanctum");
             sanctum.Description.English("");
             sanctum.Crafting.Set(CraftingTable.ArtisanTable);
             sanctum.Category.Set(BuildPieceCategory.Misc);
             sanctum.RequiredItems.Add("SwordCheat", 1, false);
             sanctum.SpecialProperties = new SpecialProperties()
             {
-                AdminOnly = true
+                AdminOnly = true, NoConfig = true
             };
             sanctum.Prefab.AddComponent<Behaviors.Sanctum>();
             MaterialReplacer.RegisterGameObjectForShaderSwap(sanctum.Prefab.transform.Find("model/Fountain").gameObject, MaterialReplacer.ShaderType.PieceShader);
@@ -123,8 +131,9 @@ namespace Sanctums
             crumbled.RequiredItems.Add("SwordCheat", 1, false);
             crumbled.SpecialProperties = new SpecialProperties()
             {
-                AdminOnly = true
+                AdminOnly = true, NoConfig = true
             };
+            crumbled.Prefab.AddComponent<CrumbedSanctum>();
             MaterialReplacer.RegisterGameObjectForShaderSwap(crumbled.Prefab.transform.Find("broken/Fountain").gameObject, MaterialReplacer.ShaderType.PieceShader);
             crumbled.PlaceEffects = new() { "vfx_Place_workbench", "sfx_build_hammer_stone" };
             crumbled.DestroyedEffects = new() { "vfx_RockDestroyed", "sfx_rock_destroyed" };

@@ -271,6 +271,7 @@ public static class SanctumManager
             m_endMessage = data.StopMessage,
             m_tooltip = data.Tooltip,
             m_weight = data.Weight,
+            m_text = data.Text,
             m_color = new UnityEngine.Color(data.Color.red, data.Color.green, data.Color.blue, 2f),
             m_modifiers = new Dictionary<EffectType, float>()
             {
@@ -421,6 +422,7 @@ public static class SanctumManager
         public string Biome = "All";
         public float Weight = 1f;
         public Color Color = new Color();
+        public string Text = "";
         public string StartMessage = "";
         public string StopMessage = "";
         public string IconFileName = "";

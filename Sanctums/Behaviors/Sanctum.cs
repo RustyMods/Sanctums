@@ -14,7 +14,7 @@ public class Sanctum : MonoBehaviour, Hoverable, Interactable
     private static readonly int GlowMax = Shader.PropertyToID("_glowMax");
     private static readonly int Emissive = Shader.PropertyToID("_EmissionColor");
     public static readonly string m_crumblePlayerKey = "CrumbledID";
-    public readonly int m_activeKey = "SanctumActivated".GetStableHashCode();
+    public static readonly int m_activeKey = "SanctumActivated".GetStableHashCode();
     public readonly int m_effectKey = "SanctumEffect".GetStableHashCode();
     public readonly int m_oldUID = "SanctumUID".GetStableHashCode();
     public static readonly List<Sanctum> m_instances = new();
@@ -79,8 +79,9 @@ public class Sanctum : MonoBehaviour, Hoverable, Interactable
     private void Reset()
     {
         if (!m_nview.IsValid()) return;
+        var old = m_nview.GetZDO().m_uid.ID;
         m_nview.GetZDO().Set(m_activeKey, false);
-        m_nview.GetZDO().Set(m_oldUID, m_nview.GetZDO().m_uid.ID);
+        m_nview.GetZDO().Set(m_oldUID, old);
     }
 
     public void Update()
@@ -98,9 +99,6 @@ public class Sanctum : MonoBehaviour, Hoverable, Interactable
     {
         if (!m_nview.IsValid()) return;
         m_nview.InvokeRPC(nameof(RPC_Crumble), 0.24f);
-        // m_wearNTear.m_healthPercentage = 0.24f;
-        // if (m_activeEffects != null) m_activeEffects.SetActive(false);
-        // m_nview.GetZDO().m_prefab = "KingSanctum_Crumbled".GetStableHashCode();
     }
 
     public void RPC_Crumble(long sender, float health)
@@ -346,8 +344,6 @@ public class Sanctum : MonoBehaviour, Hoverable, Interactable
             {
                 if (m_crystal != null) m_completeEffect?.Create(m_crystal.transform.position, Quaternion.identity);
             }
-            // StopCoroutine(PingCode());
-            // m_codeTimer = 0.0f;
             m_coroutineRunning = false;
             return true;
         }
@@ -394,7 +390,7 @@ public class Sanctum : MonoBehaviour, Hoverable, Interactable
 
     public bool Interact(Humanoid user, bool hold, bool alt)
     {
-        SanctumManager.PrayAnimation();
+        if (SanctumsPlugin.UsePrayAnimation()) SanctumManager.PrayAnimation();
         if (user.GetSEMan().GetStatusEffects().Any(x => x is SanctumEffect))
         {
             user.Message(MessageHud.MessageType.Center, "$msg_alreadyhaveeffect");
@@ -402,9 +398,17 @@ public class Sanctum : MonoBehaviour, Hoverable, Interactable
         }
         if (m_activeEffects == null) return false;
         if (!m_nview.IsValid()) return false;
-        if (IsActivated()) return false;
+        if (IsActivated())
+        {
+            DisplayText();
+            return false;
+        }
         if (m_effect == null) return false;
-        if (GetActivatedSwitchesCount() != m_switches.Count && SanctumsPlugin.CompleteChallenge()) return false;
+        if (GetActivatedSwitchesCount() != m_switches.Count && SanctumsPlugin.CompleteChallenge())
+        {
+            DisplayText();
+            return false;
+        }
         m_activeEffects.SetActive(true);
         SetGlow(5);
         m_nview.GetZDO().Set(m_activeKey, true);
@@ -415,6 +419,13 @@ public class Sanctum : MonoBehaviour, Hoverable, Interactable
         m_nview.GetZDO().Set(m_oldUID, (int)m_nview.GetZDO().m_uid.ID);
         if (m_floatingCrystal != null) m_floatingCrystal.Enable(IsActivated());
         return false;
+    }
+
+    private void DisplayText()
+    {
+        if (m_effect == null) return;
+        if (m_effect.data.m_text.IsNullOrWhiteSpace()) return;
+        TextViewer.instance.ShowText(TextViewer.Style.Rune, GetName(), m_effect.data.m_text, true);
     }
 
     public bool UseItem(Humanoid user, ItemDrop.ItemData item) => false;

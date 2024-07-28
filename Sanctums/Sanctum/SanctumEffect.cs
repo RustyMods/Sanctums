@@ -17,6 +17,7 @@ public class SanctumData
     public string m_endMessage = "";
     public string m_tooltip = "";
     public Color m_color;
+    public string m_text = "";
     public Heightmap.Biome m_biome = Heightmap.Biome.All;
     public float m_weight = 1f;
     public readonly List<HitData.DamageModPair> m_resistances = new();
@@ -90,6 +91,36 @@ public enum EffectType
 public class SanctumEffect : StatusEffect
 {
     public SanctumData data = null!;
+
+    public override void Setup(Character character)
+    {
+        var fx_Fader_Spin = ZNetScene.instance.GetPrefab("fx_Fader_Spin");
+        var fx_Fader_CorpseExplosion = ZNetScene.instance.GetPrefab("fx_Fader_CorpseExplosion");
+        var sfx_dverger_heal_finish = ZNetScene.instance.GetPrefab("sfx_dverger_heal_finish");
+        if (fx_Fader_Spin && fx_Fader_CorpseExplosion && sfx_dverger_heal_finish)
+        {
+            m_stopEffects = new EffectList()
+            {
+                m_effectPrefabs = new[]
+                {
+                    new EffectList.EffectData()
+                    {
+                        m_prefab = fx_Fader_Spin
+                    },
+                    new EffectList.EffectData()
+                    {
+                        m_prefab = fx_Fader_CorpseExplosion
+                    },
+                    new EffectList.EffectData()
+                    {
+                        m_prefab = sfx_dverger_heal_finish
+                    }
+                }
+            };
+        }
+        
+        base.Setup(character);
+    }
 
     public void Reload()
     {

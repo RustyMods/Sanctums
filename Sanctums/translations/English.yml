@@ -4,6 +4,7 @@ msg_alreadyhaveeffect: 'Already have sanctum power'
 
 hud_activatedrunes: 'activated runes'
 hud_sanctumprefix: 'Sanctum of'
+
 se_damageincrease: 'Damage'
 se_loot: 'Loot'
 se_damagereduction: 'Damage Reduction'

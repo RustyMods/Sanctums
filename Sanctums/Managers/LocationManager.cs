@@ -50,7 +50,7 @@ public class LocationManager
     {
         private readonly AssetID AssetID;
         public readonly GameObject prefab;
-        public string m_sanctum;
+        public readonly string m_sanctum;
         public LocationData(string name, AssetBundle bundle, string sanctum = "")
         {
             prefab = bundle.LoadAsset<GameObject>(name);

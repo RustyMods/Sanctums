@@ -2,6 +2,7 @@
 using System.Linq;
 using BepInEx;
 using HarmonyLib;
+using Sanctums.Behaviors;
 using ServerSync;
 using UnityEngine;
 using YamlDotNet.Serialization;
@@ -10,8 +11,8 @@ namespace Sanctums.Sanctum;
 
 public static class Commands
 {
-    private static readonly CustomSyncedValue<string> m_sanctumLocations = new CustomSyncedValue<string>(SanctumsPlugin.ConfigSync, "CustomSyncedSanctumLocations", "");
-    
+    private static readonly CustomSyncedValue<List<string>> m_sanctumLocations = new CustomSyncedValue<List<string>>(SanctumsPlugin.ConfigSync, "CustomSyncedSanctumLocations", new());
+    private static List<string> m_locations = new();
     [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.GenerateLocationsIfNeeded))]
     private static class RegisterGeneratedSanctums
     {
@@ -37,7 +38,8 @@ public static class Commands
                                              "clear: removes sanctum effect from player without removing all other effects",
                                              "reveal: reveals all sanctum locations on the map",
                                              "pray: starts the pray animation",
-                                             "remove_pins: removes revealed pins from map"
+                                             "remove_pins: removes revealed pins from map",
+                                             "reset: resets nearby crumbled sanctums, you will need to reload zone after command"
                                          })
                                 {
                                     SanctumsPlugin.SanctumsLogger.LogInfo(info);
@@ -61,9 +63,13 @@ public static class Commands
                                 }
                                 args.Context.m_findPins.Clear();
                                 break;
+                            case "reset":
+                                if (!Terminal.m_cheat) return false;
+                                CrumbedSanctum.ResetAllSanctums();
+                                break;
                         }
                         return true;
-                    }), optionsFetcher: ()=>new(){"help", "clear", "reveal", "pray", "remove_pins"});
+                    }), optionsFetcher: ()=>new(){"help", "clear", "reveal", "pray", "remove_pins", "reset"});
         }
     }
     private static void RevealAllSanctums(Terminal.ConsoleEventArgs args)
@@ -90,16 +96,11 @@ public static class Commands
         }
         else
         {
-            if (!m_sanctumLocations.Value.IsNullOrWhiteSpace())
+            foreach (string? position in m_locations)
             {
-                var deserializer = new DeserializerBuilder().Build();
-                var list = deserializer.Deserialize<List<string>>(m_sanctumLocations.Value);
-                foreach (string? position in list)
-                {
-                    if (!GetVector(position, out Vector3 pos)) continue;
-                    args.Context.m_findPins.Add(Minimap.instance.AddPin(pos, Minimap.PinType.Icon0, "Sanctum", false, false));
-                    ++count;
-                }
+                if (!GetVector(position, out Vector3 pos)) continue;
+                args.Context.m_findPins.Add(Minimap.instance.AddPin(pos, Minimap.PinType.Icon0, "Sanctum", false, false));
+                ++count;
             }
         }
         SanctumsPlugin.SanctumsLogger.LogInfo($"Revealed {count} sanctums on map");
@@ -118,9 +119,16 @@ public static class Commands
             ++count;
         }
 
-        var serializer = new SerializerBuilder().Build();
-        m_sanctumLocations.Value = serializer.Serialize(data);
+        m_sanctumLocations.Value = data;
         SanctumsPlugin.SanctumsLogger.LogDebug($"Registered {count} sanctum locations on the server");
+    }
+
+    public static void LoadServerLocationChange()
+    {
+        m_sanctumLocations.ValueChanged += () =>
+        {
+            m_locations = m_sanctumLocations.Value;
+        };
     }
 
     private static string FormatPosition(Vector3 position) => $"{position.x},{position.y},{position.z}";

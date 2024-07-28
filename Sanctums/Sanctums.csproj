@@ -120,6 +120,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Behaviors\CrumbedSanctum.cs" />
         <Compile Include="Behaviors\FloatingCrystal.cs" />
         <Compile Include="Behaviors\Sanctum.cs" />
         <Compile Include="Managers\AssetLoaderManager.cs" />
