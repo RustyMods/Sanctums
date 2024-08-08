@@ -94,6 +94,7 @@ public class SanctumEffect : StatusEffect
 
     public override void Setup(Character character)
     {
+        m_startMessageType = SanctumsPlugin.GetMessageType();
         var fx_Fader_Spin = ZNetScene.instance.GetPrefab("fx_Fader_Spin");
         var fx_Fader_CorpseExplosion = ZNetScene.instance.GetPrefab("fx_Fader_CorpseExplosion");
         var sfx_dverger_heal_finish = ZNetScene.instance.GetPrefab("sfx_dverger_heal_finish");

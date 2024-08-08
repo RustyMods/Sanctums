@@ -23,7 +23,7 @@ namespace Sanctums
     public class SanctumsPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Sanctums";
-        internal const string ModVersion = "1.0.0";
+        internal const string ModVersion = "1.0.1";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static readonly string ConfigFileName = ModGUID + ".cfg";
@@ -44,6 +44,7 @@ namespace Sanctums
         private static ConfigEntry<Toggle> c_usePrayAnimation = null!;
         private static ConfigEntry<int> c_locationAmount = null!;
         private static ConfigEntry<Heightmap.Biome> c_biomes = null!;
+        private static ConfigEntry<MessageHud.MessageType> c_effectMessageType = null!;
         private void LoadConfigs()
         {
             _serverConfigLocked = config("1 - General", "Lock Configuration", Toggle.On,
@@ -55,8 +56,10 @@ namespace Sanctums
             c_usePrayAnimation = config("2 - Settings", "Use Pray Animation", Toggle.On, "If on, when user interacts with sanctum, they start praying");
             c_locationAmount = config("3 - Location", "Amount", 100, "Set amount of sanctums locations to attempt to generate");
             c_biomes = config("3 - Location", "Biomes", Heightmap.Biome.All, "Set biomes sanctums can spawn in");
-            
+            c_effectMessageType = config("2 - Settings", "Message Type", MessageHud.MessageType.Center, "Set where the start and stop messages should display");
         }
+
+        public static MessageHud.MessageType GetMessageType() => c_effectMessageType.Value;
 
         public static bool UsePrayAnimation() => c_usePrayAnimation.Value is Toggle.On;
         public static bool PreventDeath() => c_preventDeath.Value is Toggle.On;
